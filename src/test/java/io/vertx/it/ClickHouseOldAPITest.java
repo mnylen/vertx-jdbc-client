@@ -15,6 +15,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.ClickHouseContainer;
 
+import java.util.List;
+
 @RunWith(VertxUnitRunner.class)
 public class ClickHouseOldAPITest {
 
@@ -35,11 +37,14 @@ public class ClickHouseOldAPITest {
   }
 
   @After
-  public void after(TestContext ctx) {
-    System.out.println(container.getLogs());
-    container.stop();
-    vertx.close(ctx.asyncAssertSuccess());
-    client.close(ctx.asyncAssertSuccess());
+  public void after(TestContext should) {
+    Async cleanup = should.async();
+    client.close(should.asyncAssertSuccess(res1 -> {
+      vertx.close(should.asyncAssertSuccess(res2 -> {
+          container.close();
+          cleanup.complete();
+      }));
+    }));
   }
 
   @Test
